@@ -5,9 +5,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>de.digitalcollections.imageio</groupId>
+    <groupId>hu.broadbit.de.digitalcollections.imageio</groupId>
     <artifactId>imageio-jnr</artifactId>
-    <version>0.6.9-SNAPSHOT</version>
+    <version>0.6.9-pdfbox</version>
   </parent>
   <artifactId>imageio-openjpeg</artifactId>
   <name>MDZ/Bayerische Staatsbibliothek :: ImageIO :: OpenJPEG/JPEG2000 plugin</name>

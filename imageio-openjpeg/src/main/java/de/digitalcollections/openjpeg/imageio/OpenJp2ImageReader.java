@@ -34,6 +34,10 @@ public class OpenJp2ImageReader extends ImageReader {
     this.lib = lib;
   }
 
+  public boolean canReadRaster() {
+    return true; // lie, but PdfBox doesn't actually care
+  }
+
   @Override
   public void setInput(Object input, boolean seekForwardOnly, boolean ignoreMetadata) {
     super.setInput(input, seekForwardOnly, ignoreMetadata);

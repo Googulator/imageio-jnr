@@ -29,6 +29,14 @@ class ImageInputStreamWrapper extends InStreamWrapper {
     }
   }
 
+  public byte[] peek(int numBytes) throws IOException {
+    byte[] buf = new byte[numBytes];
+    is.mark();
+    is.read(buf, 0, numBytes);
+    is.reset();
+    return buf;
+  }
+
   protected long skip(long numBytes, Pointer userData) {
     try {
       return this.is.skipBytes(numBytes);

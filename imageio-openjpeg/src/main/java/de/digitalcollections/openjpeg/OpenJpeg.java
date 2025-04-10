@@ -22,10 +22,12 @@ import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.Raster;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
@@ -53,6 +55,8 @@ public class OpenJpeg {
   public static final ColorModel COLOR_MODEL_CMYK_ALPHA =
       new ComponentColorModel(
           new CMYKColorSpace(), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
+
+  private static final byte[] STREAM_HEADER = new byte[] {(byte) 0xff, 0x4f, (byte) 0xff, 0x51};
 
   public libopenjp2 lib;
   public Runtime runtime;
@@ -90,9 +94,15 @@ public class OpenJpeg {
 
   /** Obtain information about the JPEG200 image located at the given path. */
   public Info getInfo(Path filePath) throws IOException {
+    CODEC_FORMAT codecFormat = CODEC_FORMAT.OPJ_CODEC_JP2;
+    try (InputStream in = Files.newInputStream(filePath)) {
+      byte[] buf = new byte[4];
+      in.read(buf, 0, 4);
+      codecFormat = getCodecFormat(buf);
+    }
     Pointer ptr = createOpjFileStream(filePath);
     try {
-      return getInfo(ptr);
+      return getInfo(ptr, codecFormat);
     } finally {
       lib.opj_stream_destroy(ptr);
     }
@@ -101,23 +111,22 @@ public class OpenJpeg {
   /** Obtain information about the JPEG200 image in the input stream. */
   public Info getInfo(InStreamWrapper wrapper) throws IOException {
     try {
-      return this.getInfo(wrapper.getNativeStream());
+      return this.getInfo(wrapper.getNativeStream(), getCodecFormat(wrapper.peek(4)));
     } finally {
       wrapper.close();
     }
   }
 
-  private CODEC_FORMAT getCodecFormat(Pointer stream) {
-    if (stream.getInt(0) == 0x51FF4FFF || stream.getInt(0) == 0xFF4FFF51)
-      return CODEC_FORMAT.OPJ_CODEC_J2K;
+  private CODEC_FORMAT getCodecFormat(byte[] header) {
+    if (Arrays.equals(header, STREAM_HEADER)) return CODEC_FORMAT.OPJ_CODEC_J2K;
     return CODEC_FORMAT.OPJ_CODEC_JP2;
   }
 
-  private Info getInfo(Pointer stream) throws IOException {
+  private Info getInfo(Pointer stream, CODEC_FORMAT codecFormat) throws IOException {
     Pointer codec = null;
     opj_image img = null;
     try {
-      codec = getCodec(0, getCodecFormat(stream));
+      codec = getCodec(0, codecFormat);
       img = getImage(stream, codec);
       return getInfo(codec, img);
     } finally {
@@ -190,7 +199,7 @@ public class OpenJpeg {
   public BufferedImage decode(InStreamWrapper wrapper, Rectangle area, int reduceFactor)
       throws IOException {
     try {
-      return decode(wrapper.getNativeStream(), area, reduceFactor);
+      return decode(wrapper.getNativeStream(), area, reduceFactor, getCodecFormat(wrapper.peek(4)));
     } finally {
       wrapper.close();
     }
@@ -206,9 +215,15 @@ public class OpenJpeg {
    * @throws IOException if there's a problem decoding the image or reading the file
    */
   public BufferedImage decode(Path filePath, Rectangle area, int reduceFactor) throws IOException {
+    CODEC_FORMAT codecFormat = CODEC_FORMAT.OPJ_CODEC_JP2;
+    try (InputStream in = Files.newInputStream(filePath)) {
+      byte[] buf = new byte[4];
+      in.read(buf, 0, 4);
+      codecFormat = getCodecFormat(buf);
+    }
     Pointer ptr = createOpjFileStream(filePath);
     try {
-      return decode(ptr, area, reduceFactor);
+      return decode(ptr, area, reduceFactor, codecFormat);
     } finally {
       lib.opj_stream_destroy(ptr);
     }
@@ -223,12 +238,13 @@ public class OpenJpeg {
     return lib.opj_stream_create_default_file_stream(filePath.toAbsolutePath().toString(), true);
   }
 
-  private BufferedImage decode(Pointer stream, Rectangle area, int reduceFactor)
+  private BufferedImage decode(
+      Pointer stream, Rectangle area, int reduceFactor, CODEC_FORMAT codecFormat)
       throws IOException {
     Pointer codec = null;
     opj_image img = null;
     try {
-      codec = getCodec(reduceFactor, getCodecFormat(stream));
+      codec = getCodec(reduceFactor, codecFormat);
       img = getImage(stream, codec);
 
       // Configure decoding area

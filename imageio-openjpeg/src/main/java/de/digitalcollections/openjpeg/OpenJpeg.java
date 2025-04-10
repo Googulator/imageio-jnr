@@ -107,11 +107,17 @@ public class OpenJpeg {
     }
   }
 
+  private CODEC_FORMAT getCodecFormat(Pointer stream) {
+    if (stream.getInt(0) == 0x51FF4FFF)
+      return CODEC_FORMAT.OPJ_CODEC_J2K;
+    return CODEC_FORMAT.OPJ_CODEC_JP2;
+  }
+
   private Info getInfo(Pointer stream) throws IOException {
     Pointer codec = null;
     opj_image img = null;
     try {
-      codec = getCodec(0);
+      codec = getCodec(0, getCodecFormat(stream));
       img = getImage(stream, codec);
       return getInfo(codec, img);
     } finally {
@@ -150,8 +156,8 @@ public class OpenJpeg {
     }
   }
 
-  private Pointer getCodec(int reduceFactor) throws IOException {
-    Pointer codec = lib.opj_create_decompress(CODEC_FORMAT.OPJ_CODEC_JP2);
+  private Pointer getCodec(int reduceFactor, CODEC_FORMAT codecFormat) throws IOException {
+    Pointer codec = lib.opj_create_decompress(codecFormat);
     setupLogger(codec);
     opj_dparameters params = new opj_dparameters(Runtime.getRuntime(lib));
     lib.opj_set_default_decoder_parameters(params);
@@ -222,7 +228,7 @@ public class OpenJpeg {
     Pointer codec = null;
     opj_image img = null;
     try {
-      codec = getCodec(reduceFactor);
+      codec = getCodec(reduceFactor, getCodecFormat(stream));
       img = getImage(stream, codec);
 
       // Configure decoding area

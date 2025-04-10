@@ -108,7 +108,7 @@ public class OpenJpeg {
   }
 
   private CODEC_FORMAT getCodecFormat(Pointer stream) {
-    if (stream.getInt(0) == 0x51FF4FFF)
+    if (stream.getInt(0) == 0x51FF4FFF || stream.getInt(0) == 0xFF4FFF51)
       return CODEC_FORMAT.OPJ_CODEC_J2K;
     return CODEC_FORMAT.OPJ_CODEC_JP2;
   }

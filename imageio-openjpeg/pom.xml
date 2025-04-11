@@ -7,7 +7,7 @@
   <parent>
     <groupId>hu.broadbit.de.digitalcollections.imageio</groupId>
     <artifactId>imageio-jnr</artifactId>
-    <version>0.6.9-pdfbox</version>
+    <version>0.6.9-j2c</version>
   </parent>
   <artifactId>imageio-openjpeg</artifactId>
   <name>MDZ/Bayerische Staatsbibliothek :: ImageIO :: OpenJPEG/JPEG2000 plugin</name>

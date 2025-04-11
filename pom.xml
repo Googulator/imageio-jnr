@@ -6,7 +6,7 @@
 
   <groupId>hu.broadbit.de.digitalcollections.imageio</groupId>
   <artifactId>imageio-jnr</artifactId>
-  <version>0.6.9-pdfbox</version>
+  <version>0.6.9-j2c</version>
   <packaging>pom</packaging>
   <name>MDZ/Bayerische Staatsbibliothek :: ImageIO</name>
   <description>Parent for ImageIO-JNR components.</description>
